@@ -1,0 +1,10 @@
+<log4z>
+    <logger name="Common">
+        <appender>CommonAppender</appender>
+    </logger>
+    <appender name="CommonAppender">
+        <levelDefine size="50" min="debug" max="fatal" line="false" encoder="console" console="true" maxDay="15" maxBackup="2">
+            <path>log/run.log</path>
+        </levelDefine>
+    </appender>
+</log4z>
