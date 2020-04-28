@@ -2,6 +2,7 @@ package core
 
 import (
 	"github.com/shirou/gopsutil/process"
+	. "github.com/xukgo/gcrond/logUtil"
 	"go.uber.org/zap"
 	"strings"
 )
@@ -30,8 +31,8 @@ func GetProcessInfos() ([]*process.Process, error) {
 	return infos, err
 }
 
-func GetProcessCmdLines(contains []string, nots []string) []string {
-	if len(contains) == 0 {
+func GetProcessCmdLines(execPath string, contains []string, nots []string) []string {
+	if len(contains) == 0 && len(execPath) == 0 {
 		return nil
 	}
 
@@ -46,23 +47,11 @@ func GetProcessCmdLines(contains []string, nots []string) []string {
 		if len(cmdline) == 0 {
 			continue
 		}
-		//exe,_ := info.Exe()
-		if strings.HasPrefix(cmdline, "cat ") {
+		exe, _ := info.Exe()
+		if len(exe) == 0 {
 			continue
 		}
-		if strings.HasPrefix(cmdline, "zcat ") {
-			continue
-		}
-		if strings.HasPrefix(cmdline, "vim ") {
-			continue
-		}
-		if strings.HasPrefix(cmdline, "tail ") {
-			continue
-		}
-		if strings.HasPrefix(cmdline, "gdb ") {
-			continue
-		}
-		if strings.Contains(cmdline, "grep ") {
+		if len(execPath) > 0 && strings.Index(exe, execPath) <= 0 {
 			continue
 		}
 		if !checkContainsAll(cmdline, contains) {

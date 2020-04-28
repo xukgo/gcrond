@@ -1,4 +1,4 @@
-package core
+package logUtil
 
 import (
 	"fmt"
@@ -7,15 +7,26 @@ import (
 	"go.uber.org/zap"
 )
 
-var LoggerCommon *zap.Logger
+var LoggerCommon *Logger
+var LoggerBll *Logger
 
 func init() {
+	//confPath := fileUtil.GetAbsUrl("conf/log4z.xml")
+	//loggerMap := log4z.InitLogger(confPath)
+	//LoggerCommon = getLoggerOrConsole(loggerMap, "Common")
+	//LoggerBll = getLoggerOrConsole(loggerMap, "Bll")
+	//LoggerPush = getLoggerOrConsole(loggerMap, "Push")
+	//LoggerSdr = getLoggerOrConsole(loggerMap, "Sdr")
+	//LoggerWrongCdr = getLoggerOrConsole(loggerMap, "WrongCdr")
+
 	confPath := fileUtil.GetAbsUrl("conf/log4z.xml")
 	loggerMap := log4z.InitLogger(confPath,
 		log4z.WithTimeKey("timestamp"), log4z.WithTimeFormat("2006-01-02 15:04:05.999"))
-	LoggerCommon = getLoggerOrConsole(loggerMap, "Common")
-}
+	elkLogger := getLoggerOrConsole(loggerMap, "Elk")
 
+	LoggerCommon = newLogger(elkLogger, INNER_MODULE_COMMON)
+	LoggerBll = newLogger(elkLogger, INNER_MODULE_BLL)
+}
 func getLoggerOrConsole(dict map[string]*zap.Logger, key string) *zap.Logger {
 	logger, ok := dict[key]
 	if ok {

@@ -1,0 +1,16 @@
+TimerTask:
+  - interval: 1d
+    shellPath:
+      - /opt/cmd/aa.sh
+RuleExec:
+  - interval: 10s
+    shellPath:
+      - /opt/cmd/bb.sh
+    check:
+      execPath: /bin/doa
+      includeCmd:
+        - "111"
+        - "222"
+      excludeCmd:
+        - "333"
+        - "444"
