@@ -31,18 +31,18 @@ func GetProcessInfos() ([]*process.Process, error) {
 	return infos, err
 }
 
-func GetProcessCmdLines(execPath string, contains []string, nots []string) []string {
+func GetProcessCmdLines(procInfos []*process.Process, execPath string, contains []string, nots []string) []string {
 	if len(contains) == 0 && len(execPath) == 0 {
 		return nil
 	}
 
 	var arr = make([]string, 0, 3)
-	infos, err := process.Processes()
-	if err != nil {
-		LoggerCommon.Error("get process error", zap.Error(err))
-		return nil
-	}
-	for _, info := range infos {
+	//infos, err := process.Processes()
+	//if err != nil {
+	//	LoggerCommon.Error("get process error", zap.Error(err))
+	//	return nil
+	//}
+	for _, info := range procInfos {
 		cmdline, _ := info.Cmdline()
 		if len(cmdline) == 0 {
 			continue

@@ -1,10 +1,9 @@
 package core
 
 import (
-	"github.com/go-yaml/yaml"
+	"github.com/shirou/gopsutil/process"
 	"github.com/xukgo/gcrond/logUtil"
 	"go.uber.org/zap"
-	"time"
 )
 
 type RuleExecConfig struct {
@@ -18,20 +17,6 @@ type CheckExistConfig struct {
 	ExecPath   string   `yaml:"execPath"`
 	IncludeCmd []string `yaml:"includeCmd"`
 	ExcludeCmd []string `yaml:"excludeCmd"`
-}
-
-func (this *RuleExecConfig) FillWithYaml(data []byte) error {
-	err := yaml.Unmarshal(data, this)
-	if err != nil {
-		logUtil.LoggerCommon.Error("RuleExecConfig unmarshal yaml error", zap.Error(err))
-		return err
-	}
-
-	this.IntervalSec, err = ParseInterval(this.IntervalStr)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func (this *RuleExecConfig) CheckParam() bool {
@@ -54,17 +39,19 @@ func (this *RuleExecConfig) CheckParam() bool {
 	return true
 }
 
-func (this *RuleExecConfig) Start() {
-	go func() {
-		for {
-			this.checkAndDo()
-			time.Sleep(time.Second * time.Duration(this.IntervalSec))
-		}
-	}()
-}
+func (this *RuleExecConfig) CheckAndDo(procInfos []*process.Process) {
+	cmds := GetProcessCmdLines(procInfos, this.CheckConfig.ExecPath, this.CheckConfig.IncludeCmd, this.CheckConfig.ExcludeCmd)
+	if len(cmds) == 0 {
+		return
+	}
 
-func (this *RuleExecConfig) checkAndDo() {
-	cmds := GetProcessCmdLines(this.CheckConfig.ExecPath, this.CheckConfig.IncludeCmd, this.CheckConfig.ExcludeCmd)
+	procInfos, err := process.Processes()
+	if err != nil {
+		logUtil.LoggerCommon.Error("get process error", zap.Error(err))
+		return
+	}
+
+	cmds = GetProcessCmdLines(procInfos, this.CheckConfig.ExecPath, this.CheckConfig.IncludeCmd, this.CheckConfig.ExcludeCmd)
 	if len(cmds) == 0 {
 		return
 	}

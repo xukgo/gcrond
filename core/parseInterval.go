@@ -19,7 +19,7 @@ func ParseInterval(str string) (int64, error) {
 	}
 	if count < 1 {
 		logUtil.LoggerCommon.Error("Interval 数值范围不正确")
-		return 0, fmt.Errorf("Interval 数值范围不正确")
+		return 0, fmt.Errorf("Interval数值范围不正确\r\n")
 	}
 
 	switch unitStr {
@@ -37,6 +37,6 @@ func ParseInterval(str string) (int64, error) {
 		return int64(count * 24 * 3600), nil
 	default:
 		logUtil.LoggerCommon.Error("Interval 数值单位不正确，目前只允许s/m/h/d")
-		return 0, fmt.Errorf("Interval 数值单位不正确，目前只允许s/m/h/d")
+		return 0, fmt.Errorf("Interval 数值单位不正确，目前只允许s/m/h/d\n")
 	}
 }
