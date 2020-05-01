@@ -2,30 +2,17 @@ package core
 
 import (
 	"bytes"
-	"fmt"
-	"log"
 	"os/exec"
 )
 
-const ShellToUse = "bash"
+const default_shell = "bash"
 
-func Shellout(command string) (error, string, string) {
+func ExecCmdline(command string) (string, string, error) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
-	cmd := exec.Command(ShellToUse, "-c", command)
+	cmd := exec.Command(default_shell, "-c", command)
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	err := cmd.Run()
-	return err, stdout.String(), stderr.String()
-}
-
-func ShellDo(command string) {
-	err, out, errout := Shellout(command)
-	if err != nil {
-		log.Printf("error: %v\n", err)
-	}
-	fmt.Println("--- stdout ---")
-	fmt.Println(out)
-	fmt.Println("--- stderr ---")
-	fmt.Println(errout)
+	return stdout.String(), stderr.String(), err
 }

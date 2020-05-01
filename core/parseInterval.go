@@ -19,7 +19,7 @@ func ParseInterval(str string) (int64, error) {
 	}
 	if count < 1 {
 		logUtil.LoggerCommon.Error("Interval 数值范围不正确")
-		return 0, fmt.Errorf("Interval数值范围不正确\r\n")
+		return 0, fmt.Errorf("Interval数值范围不正确\n")
 	}
 
 	switch unitStr {

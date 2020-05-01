@@ -1,11 +1,16 @@
 TimerTask:
-  - interval: 1d
-    shellPath:
-      - /opt/cmd/aa.sh
+  - enable: true
+    description: 删除过期es历史数据
+    interval: 5s
+    command:
+      - "sh /opt/cmd/aa.sh"
 RuleExec:
-  - interval: 10s
-    shellPath:
-      - /opt/cmd/bb.sh
+  - enable: true
+    startupDelay: 30
+    description: 呼叫中心
+    interval: 10s
+    command:
+      - "sh /opt/cmd/bb.sh"
     check:
       execPath: /bin/doa
       includeCmd:
