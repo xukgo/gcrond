@@ -79,6 +79,8 @@ func main() {
 		}
 	}
 
+	logUtil.InitLogger()
+
 	var err error
 	filePath := fileUtil.GetAbsUrl("conf/crond.yml")
 	content, err := ioutil.ReadFile(filePath)

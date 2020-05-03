@@ -10,7 +10,7 @@ import (
 var LoggerCommon *Logger
 var LoggerBll *Logger
 
-func init() {
+func InitLogger() {
 	//confPath := fileUtil.GetAbsUrl("conf/log4z.xml")
 	//loggerMap := log4z.InitLogger(confPath)
 	//LoggerCommon = getLoggerOrConsole(loggerMap, "Common")
