@@ -1,13 +1,13 @@
 TimerTask:
-  - enable: true
-    description: 删除过期es历史数据
+  - enable: false
+    description: 示例-描述字段
     interval: 5s
     command:
       - "sh /opt/cmd/aa.sh"
 RuleExec:
-  - enable: true
+  - enable: false
     startupDelay: 30
-    description: 呼叫中心
+    description: 示例-描述字段
     interval: 10s
     command:
       - "sh /opt/cmd/bb.sh"
@@ -19,3 +19,14 @@ RuleExec:
       excludeCmd:
         - "333"
         - "444"
+
+  - enable: true
+    startupDelay: 30
+    description: redis6379
+    interval: 10s
+    command:
+      - "touch /opt/redis6379"
+    check:
+      execPath: /usr/local/redis/bin/redis-server
+      includeCmd:
+        - "6379"

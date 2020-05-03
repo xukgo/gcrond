@@ -30,6 +30,40 @@ func GetProcessInfos() ([]*process.Process, error) {
 	}
 	return infos, err
 }
+func GetProcess(procInfos []*process.Process, execPath string, contains []string, nots []string) []*process.Process {
+	if len(contains) == 0 && len(execPath) == 0 {
+		return nil
+	}
+
+	var arr = make([]*process.Process, 0, 3)
+	//infos, err := process.Processes()
+	//if err != nil {
+	//	LoggerCommon.Error("get process error", zap.Error(err))
+	//	return nil
+	//}
+	for _, info := range procInfos {
+		cmdline, _ := info.Cmdline()
+		if len(cmdline) == 0 {
+			continue
+		}
+		exe, _ := info.Exe()
+		if len(exe) == 0 {
+			continue
+		}
+		if len(execPath) > 0 && strings.Index(exe, execPath) <= 0 {
+			continue
+		}
+		if !checkContainsAll(cmdline, contains) {
+			continue
+		}
+		if !checkNotContainsAll(cmdline, nots) {
+			continue
+		}
+
+		arr = append(arr, info)
+	}
+	return arr
+}
 
 func GetProcessCmdLines(procInfos []*process.Process, execPath string, contains []string, nots []string) []string {
 	if len(contains) == 0 && len(execPath) == 0 {
@@ -51,7 +85,7 @@ func GetProcessCmdLines(procInfos []*process.Process, execPath string, contains 
 		if len(exe) == 0 {
 			continue
 		}
-		if len(execPath) > 0 && strings.Index(exe, execPath) <= 0 {
+		if len(execPath) > 0 && strings.Index(exe, execPath) < 0 {
 			continue
 		}
 		if !checkContainsAll(cmdline, contains) {
