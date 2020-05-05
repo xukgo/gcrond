@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"github.com/shirou/gopsutil/process"
 	_ "github.com/spf13/pflag"
+	"github.com/xukgo/gcrond/compon/procUnique"
 	"github.com/xukgo/gcrond/core"
 	"github.com/xukgo/gcrond/logUtil"
 	"github.com/xukgo/gsaber/utils/fileUtil"
 	"go.uber.org/zap"
 	"io/ioutil"
+	"log"
 	"os"
 	"time"
 )
@@ -36,9 +38,7 @@ func initFlag() {
 	flag.Usage = usage
 }
 func usage() {
-	fmt.Fprintf(os.Stderr, `nginx version: nginx/1.10.0
-Usage: nginx [-hvVtTq] [-s signal] [-c filename] [-p prefix] [-g directives]
-
+	fmt.Fprintf(os.Stderr, `gcrond version: gcrond/1.0.0
 Options:
 `)
 	flag.PrintDefaults()
@@ -79,9 +79,18 @@ func main() {
 		}
 	}
 
+	var err error
+	var procLocker = procUnique.NewLocker("gcrond_hms")
+	err = procLocker.Lock()
+	if err != nil {
+		log.Println("应用不允许重复运行")
+		os.Exit(-1)
+	}
+
+	defer procLocker.Unlock()
+
 	logUtil.InitLogger()
 
-	var err error
 	filePath := fileUtil.GetAbsUrl("conf/crond.yml")
 	content, err := ioutil.ReadFile(filePath)
 	if err != nil {
