@@ -129,7 +129,7 @@ func main() {
 				}
 				ruleExec.CheckAndDo(procInfos)
 			}
-			time.Sleep(time.Second)
+			time.Sleep(time.Second * 3)
 		}
 	}
 
