@@ -3,15 +3,16 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/shirou/gopsutil/process"
 	_ "github.com/spf13/pflag"
 	"github.com/xukgo/gcrond/compon/procUnique"
 	"github.com/xukgo/gcrond/core"
 	"github.com/xukgo/gcrond/logUtil"
+	"github.com/xukgo/gcrond/psutil"
 	"github.com/xukgo/gsaber/utils/fileUtil"
 	"go.uber.org/zap"
 	"io/ioutil"
 	"log"
+	//_ "net/http/pprof"
 	"os"
 	"time"
 )
@@ -43,6 +44,7 @@ Options:
 `)
 	flag.PrintDefaults()
 }
+
 func main() {
 	initFlag()
 	flag.Parse()
@@ -63,7 +65,7 @@ func main() {
 			return
 		}
 
-		procs, err := process.Processes()
+		procs, err := psutil.FilterGetProcCmdInfos()
 		if err != nil {
 			fmt.Fprintf(os.Stdout, "get process error:%s\n", err.Error())
 			return
@@ -71,8 +73,8 @@ func main() {
 		procInfos := core.GetProcess(procs, "", []string{fsearchKey}, nil)
 		if len(procInfos) > 0 {
 			for _, info := range procInfos {
-				exe, _ := info.Exe()
-				cmdline, _ := info.Cmdline()
+				exe := info.Exe
+				cmdline := info.Cmdline
 				fmt.Fprintf(os.Stdout, "%s  =>  %s\n", exe, cmdline)
 			}
 			return
@@ -91,8 +93,21 @@ func main() {
 
 	logUtil.InitLogger()
 
-	filePath := fileUtil.GetAbsUrl("conf/crond.yml")
+	filePath := fileUtil.GetAbsUrl("conf/excludePrefix.xml")
 	content, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		logUtil.LoggerCommon.Error("read file error", zap.Error(err))
+		return
+	}
+	excludeConf := new(core.ExcludeCommandXmlRoot)
+	err = excludeConf.FillWithXml(string(content))
+	if err != nil {
+		logUtil.LoggerCommon.Error("ExcludeCommand unmarshal error", zap.Error(err))
+		return
+	}
+
+	filePath = fileUtil.GetAbsUrl("conf/crond.yml")
+	content, err = ioutil.ReadFile(filePath)
 	if err != nil {
 		logUtil.LoggerCommon.Error("read file error", zap.Error(err))
 		return
@@ -112,24 +127,27 @@ func main() {
 		logUtil.LoggerCommon.Info(ruleExec.ToDescription())
 	}
 
+	//go func() {
+	//	logUtil.LoggerCommon.Info("StartProfWebService")
+	//	err := http.ListenAndServe(":60044", nil)
+	//	if err != nil {
+	//		logUtil.LoggerCommon.Error("StartProfWebService error", zap.Error(err))
+	//	}
+	//}()
+
 	go startTimers(conf.TimerTasks)
 
 	if len(conf.RuleExecConfig) > 0 {
-		for {
-			procInfos, err := process.Processes()
-			if err != nil {
-				logUtil.LoggerCommon.Error("get process error", zap.Error(err))
-				time.Sleep(time.Second)
-				continue
+		enableRuleExecArr := make([]*core.RuleExecConfig, 0, 4)
+		enableCount := 0
+		for _, ruleExec := range conf.RuleExecConfig {
+			if ruleExec.Enable {
+				enableCount++
+				enableRuleExecArr = append(enableRuleExecArr, ruleExec)
 			}
-
-			for _, ruleExec := range conf.RuleExecConfig {
-				if !ruleExec.Enable {
-					continue
-				}
-				ruleExec.CheckAndDo(procInfos)
-			}
-			time.Sleep(time.Second * 3)
+		}
+		if enableCount > 0 {
+			holdAllEnable(enableRuleExecArr)
 		}
 	}
 
@@ -145,5 +163,45 @@ func startTimers(tasks []*core.TimerTaskConfig) {
 		}
 		logUtil.LoggerCommon.Info(task.ToDescription())
 		task.Start()
+	}
+}
+
+func holdAllEnable(execArr []*core.RuleExecConfig) {
+	if len(execArr) == 0 {
+		return
+	}
+
+	var err error
+	var procInfos []*psutil.ProcCmdInfo
+	var getProcTime time.Time
+	pidArr := make([]int, len(execArr), len(execArr))
+	for i := 0; i < len(pidArr); i++ {
+		pidArr[i] = -1
+	}
+
+	for {
+		procInfos = nil
+
+		for idx, ruleExec := range execArr {
+			if pidArr[idx] > 0 && psutil.CheckPidExist(pidArr[idx]) {
+				continue
+			}
+
+			if procInfos == nil {
+				procInfos, err = psutil.FilterGetProcCmdInfos()
+				if err != nil {
+					logUtil.LoggerCommon.Error("get process error", zap.Error(err))
+					time.Sleep(time.Second * 5)
+					continue
+				}
+				getProcTime = time.Now()
+			}
+
+			pid := ruleExec.CheckAndDo(getProcTime, procInfos)
+			if pid > 0 {
+				pidArr[idx] = pid
+			}
+		}
+		time.Sleep(time.Second * 2)
 	}
 }

@@ -1,0 +1,23 @@
+<prefix>
+    <exclude>/bin/bash</exclude>
+    <exclude>sh</exclude>
+    <exclude>touch</exclude>
+    <exclude>nano</exclude>
+    <exclude>vi</exclude>
+    <exclude>vim</exclude>
+    <exclude>tail</exclude>
+    <exclude>cat</exclude>
+    <exclude>zcat</exclude>
+    <exclude>ll</exclude>
+    <exclude>ls</exclude>
+    <exclude>ps</exclude>
+    <exclude>top</exclude>
+    <exclude>htop</exclude>
+    <exclude>free</exclude>
+    <exclude>vmstat</exclude>
+    <exclude>df</exclude>
+    <exclude>find</exclude>
+    <exclude>tar</exclude>
+    <exclude>cp</exclude>
+    <exclude>rm</exclude>
+</prefix>

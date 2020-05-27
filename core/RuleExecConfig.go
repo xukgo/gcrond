@@ -3,9 +3,8 @@ package core
 import (
 	"bytes"
 	"fmt"
-	"github.com/shirou/gopsutil/process"
-	"github.com/xukgo/gcrond/compon"
 	"github.com/xukgo/gcrond/logUtil"
+	"github.com/xukgo/gcrond/psutil"
 	"go.uber.org/zap"
 	"time"
 )
@@ -64,36 +63,47 @@ func (this *RuleExecConfig) CheckParam() bool {
 	return true
 }
 
-func (this *RuleExecConfig) CheckAndDo(procInfos []*process.Process) {
+func (this *RuleExecConfig) CheckAndDo(getProcAt time.Time, procInfos []*psutil.ProcCmdInfo) int {
 	if this.StartupDelay > 0 {
-		duration, err := compon.GetSystemUptime()
+		duration, err := psutil.GetUptime()
 		if err != nil {
 			logUtil.LoggerCommon.Error("GetSystemUptime error", zap.Error(err))
-			return
+			return -1
 		}
 		if duration.Seconds() < float64(this.StartupDelay) {
-			return
+			return -1
 		}
 	}
 
 	if time.Now().Unix()-this.LastCheckUnix < this.IntervalSec {
-		return
+		return -1
 	}
 
-	cmds := GetProcessCmdLines(procInfos, this.CheckConfig.ExecPath, this.CheckConfig.IncludeCmd, this.CheckConfig.ExcludeCmd)
-	if len(cmds) > 0 {
-		return
+	infos := GetProcess(procInfos, this.CheckConfig.ExecPath, this.CheckConfig.IncludeCmd, this.CheckConfig.ExcludeCmd)
+	if len(infos) > 0 {
+		if len(infos) == 1 {
+			return infos[0].Pid
+		} else {
+			return -1
+		}
 	}
 
-	procInfos, err := process.Processes()
-	if err != nil {
-		logUtil.LoggerCommon.Error("get process error", zap.Error(err))
-		return
+	var err error
+	if time.Since(getProcAt).Seconds() > 1 {
+		procInfos, err = psutil.FilterGetProcCmdInfos()
+		if err != nil {
+			logUtil.LoggerCommon.Error("get process error", zap.Error(err))
+			return -1
+		}
 	}
 
-	cmds = GetProcessCmdLines(procInfos, this.CheckConfig.ExecPath, this.CheckConfig.IncludeCmd, this.CheckConfig.ExcludeCmd)
-	if len(cmds) > 0 {
-		return
+	infos = GetProcess(procInfos, this.CheckConfig.ExecPath, this.CheckConfig.IncludeCmd, this.CheckConfig.ExcludeCmd)
+	if len(infos) > 0 {
+		if len(infos) == 1 {
+			return infos[0].Pid
+		} else {
+			return -1
+		}
 	}
 
 	for _, cmd := range this.Commands {
@@ -111,4 +121,5 @@ func (this *RuleExecConfig) CheckAndDo(procInfos []*process.Process) {
 	}
 
 	this.LastCheckUnix = time.Now().Unix()
+	return -1
 }

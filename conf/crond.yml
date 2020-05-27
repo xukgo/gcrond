@@ -6,9 +6,9 @@ TimerTask:
       - "sh /opt/cmd/aa.sh"
 RuleExec:
   - enable: false
-    startupDelay: 30
+    startupDelay: 3
     description: 示例-描述字段
-    interval: 10s
+    interval: 1s
     command:
       - "sh /opt/cmd/bb.sh"
     check:
@@ -20,13 +20,13 @@ RuleExec:
         - "333"
         - "444"
 
-  - enable: true
-    startupDelay: 30
-    description: redis6379
-    interval: 10s
+  - enable: false
+    startupDelay: 3
+    description: mongodb
+    interval: 1s
     command:
-      - "touch /opt/redis6379"
+      - "/usr/local/mongodb/bin/mongod -f /usr/local/mongodb/mongodb.conf"
     check:
-      execPath: /usr/local/redis/bin/redis-server
+      execPath: /usr/local/mongodb/bin/mongod
       includeCmd:
-        - "6379"
+        - "mongodb.conf"
